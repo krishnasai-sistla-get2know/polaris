@@ -18,6 +18,7 @@ jobs:
       contents: read
       packages: write
       id-token: write # Needed for attestation
+      actions: read   # Required for attestation
     
     steps:
       - name: Clone Apache Polaris repository
@@ -105,3 +106,11 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+      - name: Delete older package versions
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: 'polaris'
+          package-type: 'container'
+          min-versions-to-keep: 1 # Keep only the most recent version
+          token: ${{ secrets.GITHUB_TOKEN }}
