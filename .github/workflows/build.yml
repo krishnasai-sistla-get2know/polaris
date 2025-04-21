@@ -20,24 +20,28 @@ jobs:
       id-token: write # Needed for attestation
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Clone Apache Polaris repository
+        run: |
+          git clone https://github.com/apache/polaris.git
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
+        working-directory: ./polaris
         with:
           distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
+          cache-paths: |
+            build.gradle.kts
+            settings.gradle.kts
+            gradle.properties
+            gradle/wrapper/gradle-wrapper.properties
       
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.13'
       
-      - name: Clone Apache Polaris repository
-        run: |
-          git clone https://github.com/apache/polaris.git
           
       - name: Build Polaris Quarkus server
         working-directory: ./polaris
