@@ -2,8 +2,8 @@ name: Build and Publish Apache Polaris Docker Image
 
 on:
   schedule:
-    # Run every two weeks on Sunday at midnight
-    - cron: '0 0 */14 * 0'
+    # Run every day at midnight
+    - cron: '0 0 * * *'
   # Allows manual triggering
   workflow_dispatch:
 
@@ -19,6 +19,7 @@ jobs:
       packages: write
       id-token: write # Needed for attestation
       actions: read   # Required for attestation
+      attestations: write
     
     steps:
       - name: Clone Apache Polaris repository
