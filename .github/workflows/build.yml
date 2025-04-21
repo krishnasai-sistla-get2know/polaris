@@ -109,7 +109,7 @@ jobs:
           push-to-registry: true
 
       - name: Delete older package versions
-        uses: actions/delete-package-versions@v4
+        uses: actions/delete-package-versions@v5
         with:
           package-name: 'polaris'
           package-type: 'container'
