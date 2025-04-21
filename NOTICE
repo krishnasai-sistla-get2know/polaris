@@ -1,0 +1,19 @@
+NOTICE file for Polaris Docker Image Project
+============================================
+
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
+
+This project packages the Apache Polaris Iceberg REST Catalog
+(https://github.com/apache/iceberg-rest-catalog) into Docker images
+to make deployment easier for users.
+
+Licensed under the Apache License, Version 2.0.
+
+See the LICENSE file for details.
+
+-----------------------------
+Third-Party Dependencies:
+This project may include dependencies from other open source projects.
+Please refer to their respective license files and project pages
+for applicable copyright and license information.
