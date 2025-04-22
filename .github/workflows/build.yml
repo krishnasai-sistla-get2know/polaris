@@ -100,6 +100,18 @@ jobs:
           
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
           echo "Pushed image with digest: $DIGEST"
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.polaris-version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          no-cache: true
+          platforms: linux/amd64
       
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
