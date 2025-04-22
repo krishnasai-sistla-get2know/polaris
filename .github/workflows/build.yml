@@ -46,8 +46,11 @@ jobs:
           ./gradlew \
             :polaris-quarkus-server:assemble \
             :polaris-quarkus-server:quarkusAppPartsBuild --rerun \
-            -Dquarkus.container-image.build=true \
-            -PeclipseLinkDeps=org.postgresql:postgresql:42.7.4
+            :polaris-quarkus-admin:assemble \
+            :polaris-quarkus-admin:quarkusAppPartsBuild --rerun \
+            -PeclipseLinkDeps=org.postgresql:postgresql:42.7.4 \
+            -Dquarkus.container-image.tag=postgres-latest \
+            -Dquarkus.container-image.build=true
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

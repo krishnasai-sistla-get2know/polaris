@@ -16,7 +16,7 @@ Lightweight and minimal base image
 
 ### 🚀 Getting Started
 ```bash
-docker run -p 8181:8181 krishnasai-sistla-get2know/polaris
+docker run -p 8181:8181 ghcr.io/krishnasai-sistla-get2know/polaris:latest
 ```
 
 ### 📝 License
