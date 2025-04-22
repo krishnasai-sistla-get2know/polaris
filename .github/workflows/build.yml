@@ -93,7 +93,7 @@ jobs:
         id: push
         run: |
           VERSION=${{ steps.polaris-version.outputs.version }}
-          DIGEST=$(docker push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} | grep digest | awk '{print $3}')
+          DIGEST=$(docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} | grep digest | awk '{print $3}')
           
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
           echo "Pushed image with digest: $DIGEST"
@@ -101,7 +101,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.polaris-version.outputs.version }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
