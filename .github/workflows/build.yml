@@ -85,15 +85,17 @@ jobs:
           IMAGE_ID=${{ steps.polaris-version.outputs.image_id }}
           VERSION=${{ steps.polaris-version.outputs.version }}
           FULL_IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}"
-          
-          docker tag $IMAGE_ID $FULL_IMAGE_NAME
-          echo "Tagged image $IMAGE_ID as $FULL_IMAGE_NAME"
+
+          docker tag $IMAGE_ID ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          echo "Tagged image $IMAGE_ID as ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
       
       - name: Push Docker image
         id: push
         run: |
           VERSION=${{ steps.polaris-version.outputs.version }}
-          DIGEST=$(docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} | grep digest | awk '{print $3}')
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
+          DIGEST=$(docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest | grep digest | awk '{print $3}')
           
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
           echo "Pushed image with digest: $DIGEST"
@@ -101,7 +103,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.polaris-version.outputs.version }}
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
@@ -110,9 +112,8 @@ jobs:
         with:
           package-name: 'polaris'
           package-type: 'container'
-          min-versions-to-keep: 1 # Keep only the most recent version
+          min-versions-to-keep: 2 # Keep only the most recent version
           token: ${{ secrets.GITHUB_TOKEN }}
-          delete-only-untagged-versions: true
 
       - name: Check if release exists
         id: check-release
