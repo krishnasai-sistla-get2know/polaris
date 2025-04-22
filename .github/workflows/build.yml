@@ -91,7 +91,7 @@ jobs:
           docker tag $IMAGE_ID ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           
           echo "Tagged image $IMAGE_ID as $FULL_IMAGE_NAME"
-      
+          
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
