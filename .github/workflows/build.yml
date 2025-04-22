@@ -101,6 +101,8 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.polaris-version.outputs.version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          no-cache: true
+          platforms: linux/amd64
       
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
