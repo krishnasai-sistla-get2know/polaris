@@ -95,7 +95,7 @@ jobs:
         run: |
           VERSION=${{ steps.polaris-version.outputs.version }}
           DIGEST=$(docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} | grep digest | awk '{print $3}')
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
           echo "Pushed image with digest: $DIGEST"
       
