@@ -10,6 +10,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/polaris
+  TOOL_IMAGE_NAME: ${{ github.repository_owner }}/polaris-admin-tool
 
 jobs:
   build-push-cleanup-release:
@@ -46,8 +47,10 @@ jobs:
           ./gradlew \
             :polaris-quarkus-server:assemble \
             :polaris-quarkus-server:quarkusAppPartsBuild --rerun \
-            -Dquarkus.container-image.build=true \
-            -PeclipseLinkDeps=org.postgresql:postgresql:42.7.4
+            :polaris-quarkus-admin:assemble \
+            :polaris-quarkus-admin:quarkusAppPartsBuild --rerun \
+            -PeclipseLinkDeps=org.postgresql:postgresql:42.7.4 \
+            -Dquarkus.container-image.build=true
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -67,6 +70,15 @@ jobs:
           tags: |
             type=raw,value=latest
             type=raw,value={{date 'YYYYMMDD'}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: tool_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.TOOL_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value={{date 'YYYYMMDD'}}
       
       - name: Get Polaris version and tag
         id: polaris-version
@@ -80,6 +92,11 @@ jobs:
           IMAGE_ID=$(docker images | grep "apache/polaris" | awk '{print $3}' | head -n 1)
           echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
           echo "Found image ID: $IMAGE_ID"
+
+          # Find the admin tool Docker image
+          TOOL_IMAGE_ID=$(docker images | grep "apache/polaris-admin-tool" | awk '{print $3}' | head -n 1)
+          echo "tool_image_id=$TOOL_IMAGE_ID" >> $GITHUB_OUTPUT
+          echo "Found image ID: $IMAGE_ID"
       
       - name: Tag the image for GitHub packages
         run: |
@@ -92,12 +109,33 @@ jobs:
           
           echo "Tagged image $IMAGE_ID as $FULL_IMAGE_NAME"
       
-      - name: Push Docker image
+      - name: Tag the image for GitHub packages
+        run: |
+          IMAGE_ID=${{ steps.polaris-version.outputs.tool_image_id }}
+          VERSION=${{ steps.polaris-version.outputs.version }}
+          FULL_IMAGE_NAME="${{ env.REGISTRY }}/${{ env.TOOL_IMAGE_NAME }}:${VERSION}"
+          
+          docker tag $IMAGE_ID $FULL_IMAGE_NAME
+          docker tag $IMAGE_ID ${{ env.REGISTRY }}/${{ env.TOOL_IMAGE_NAME }}:latest
+          
+          echo "Tagged image $IMAGE_ID as $FULL_IMAGE_NAME"
+
+      - name: Push Polaris Docker image
         id: push
         run: |
           VERSION=${{ steps.polaris-version.outputs.version }}
           DIGEST=$(docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} | grep digest | awk '{print $3}')
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          echo "Pushed image with digest: $DIGEST"
+
+      - name: Push admin tool Docker image
+        id: tool_push
+        run: |
+          VERSION=${{ steps.polaris-version.outputs.version }}
+          DIGEST=$(docker push ${{ env.REGISTRY }}/${{ env.TOOL_IMAGE_NAME }}:${VERSION} | grep digest | awk '{print $3}')
+          docker push ${{ env.REGISTRY }}/${{ env.TOOL_IMAGE_NAME }}:latest
           
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
           echo "Pushed image with digest: $DIGEST"
@@ -110,11 +148,26 @@ jobs:
           min-versions-to-keep: 1 # Keep only the most recent version
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Delete older package versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'polaris-admin-tool'
+          package-type: 'container'
+          min-versions-to-keep: 1 # Keep only the most recent version
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+      
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.TOOL_IMAGE_NAME }}
+          subject-digest: ${{ steps.tool_push.outputs.digest }}
           push-to-registry: true
 
       - name: Check if release exists
@@ -135,6 +188,7 @@ jobs:
             echo "Release with tag $VERSION already exists"
             echo "should_create=false" >> $GITHUB_OUTPUT
           fi
+
       - name: Create Release
         id: create-release
         if: steps.check-release.outputs.should_create == 'true'
@@ -149,4 +203,6 @@ jobs:
           body: |
             Release of Apache Polaris version ${{ steps.polaris-version.outputs.version }}
             
+            See [Packages](https://github.com/${{ github.repository_owner }}?tab=packages&repo_name=polaris)
+
             See [CHANGELOG](https://github.com/apache/polaris/commits) for details.
