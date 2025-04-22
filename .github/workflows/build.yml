@@ -115,3 +115,37 @@ jobs:
           package-type: 'container'
           min-versions-to-keep: 1 # Keep only the most recent version
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if release exists
+        id: check-release
+        run: |
+          VERSION="${{ steps.polaris-version.outputs.version }}"
+          echo "Checking if release with tag $VERSION exists..."
+          
+          # Try to fetch the release information
+          RELEASE_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/$VERSION")
+          
+          # Check if release exists
+          if [[ $RELEASE_INFO == *"Not Found"* ]]; then
+            echo "No existing release found with tag $VERSION"
+            echo "should_create=true" >> $GITHUB_OUTPUT
+          else
+            echo "Release with tag $VERSION already exists"
+            echo "should_create=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Create Release
+        id: create-release
+        if: steps.check-release.outputs.should_create == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.polaris-version.outputs.version }}
+          release_name: Release ${{ steps.polaris-version.outputs.version }}
+          draft: false
+          prerelease: false
+          body: |
+            Release of Apache Polaris version ${{ steps.polaris-version.outputs.version }}
+            
+            See [CHANGELOG](https://github.com/apache/polaris/commits) for details.
