@@ -87,7 +87,7 @@ jobs:
           FULL_IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}"
 
           docker tag $IMAGE_ID ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           echo "Tagged image $IMAGE_ID as ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
       
       - name: Push Docker image
@@ -106,13 +106,13 @@ jobs:
       #     subject-digest: ${{ steps.push.outputs.digest }}
       #     push-to-registry: true
 
-      # - name: Delete older package versions
-      #   uses: actions/delete-package-versions@v5
-      #   with:
-      #     package-name: 'polaris'
-      #     package-type: 'container'
-      #     min-versions-to-keep: 3 # Keep only the most recent version
-      #     token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Delete older package versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'polaris'
+          package-type: 'container'
+          min-versions-to-keep: 1 # Keep only the most recent version
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if release exists
         id: check-release
