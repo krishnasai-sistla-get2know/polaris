@@ -16,7 +16,7 @@ jobs:
   build-push-cleanup-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write # Needed for attestation
       actions: read   # Required for attestation
@@ -109,7 +109,7 @@ jobs:
           
           echo "Tagged image $IMAGE_ID as $FULL_IMAGE_NAME"
       
-      - name: Tag the image for GitHub packages
+      - name: Tag the tool image for GitHub packages
         run: |
           IMAGE_ID=${{ steps.polaris-version.outputs.tool_image_id }}
           VERSION=${{ steps.polaris-version.outputs.version }}
@@ -148,7 +148,7 @@ jobs:
           min-versions-to-keep: 1 # Keep only the most recent version
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete older package versions
+      - name: Delete older tool package versions
         uses: actions/delete-package-versions@v5
         with:
           package-name: 'polaris-admin-tool'
@@ -163,7 +163,7 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
       
-      - name: Generate artifact attestation
+      - name: Generate artifact attestation for admin tool
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.TOOL_IMAGE_NAME }}
